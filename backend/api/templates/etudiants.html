@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+    <div>
+        <p class="text-sm font-medium text-slate-400 uppercase tracking-wider mb-1">Scolarité</p>
+        <h2 class="text-2xl font-bold text-slate-900">Étudiants</h2>
+    </div>
+    <button onclick="document.getElementById('modal-add').classList.remove('hidden')"
+            class="btn-primary inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all hover:-translate-y-0.5">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nouvel étudiant
+    </button>
+</div>
+
+<!-- Filtres -->
+<div class="bg-white rounded-2xl border border-slate-200 p-5 mb-6 shadow-sm">
+    <form method="get" class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" name="q" placeholder="Rechercher par nom ou matricule..." value="{{ search }}"
+                   class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+        </div>
+        <select name="niveau" class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="all">Tous niveaux</option>
+            <option value="L1" {% if filter_niveau == "L1" %}selected{% endif %}>Licence 1</option>
+            <option value="L2" {% if filter_niveau == "L2" %}selected{% endif %}>Licence 2</option>
+            <option value="L3" {% if filter_niveau == "L3" %}selected{% endif %}>Licence 3</option>
+            <option value="M1" {% if filter_niveau == "M1" %}selected{% endif %}>Master 1</option>
+            <option value="M2" {% if filter_niveau == "M2" %}selected{% endif %}>Master 2</option>
+            <option value="D1" {% if filter_niveau == "D1" %}selected{% endif %}>Doctorat 1</option>
+            <option value="D2" {% if filter_niveau == "D2" %}selected{% endif %}>Doctorat 2</option>
+            <option value="D3" {% if filter_niveau == "D3" %}selected{% endif %}>Doctorat 3</option>
+        </select>
+        <select name="statut" class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="all">Tous statuts</option>
+            <option value="paye" {% if filter_statut == "paye" %}selected{% endif %}>Payé</option>
+            <option value="partiel" {% if filter_statut == "partiel" %}selected{% endif %}>Partiel</option>
+            <option value="non_paye" {% if filter_statut == "non_paye" %}selected{% endif %}>Non payé</option>
+        </select>
+        <button class="bg-gradient-to-r from-slate-900 to-slate-800 hover:from-slate-800 hover:to-slate-700 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all shadow-lg">
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            Filtrer
+        </button>
+    </form>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="card-hover bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white shadow-xl">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>
+            </div>
+        </div>
+        <div class="text-3xl font-bold">{{ total|default:0 }}</div>
+        <div class="text-xs text-white/60 mt-1 font-medium uppercase tracking-wider">Total étudiants</div>
+    </div>
+    
+    <div class="card-hover bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+        </div>
+        <div class="text-3xl font-bold">{{ nb_payes|default:0 }}</div>
+        <div class="text-xs text-white/70 mt-1 font-medium uppercase tracking-wider">Payés</div>
+    </div>
+    
+    <div class="card-hover bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-5 text-white shadow-xl">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+        </div>
+        <div class="text-3xl font-bold">{{ nb_partiels|default:0 }}</div>
+        <div class="text-xs text-white/70 mt-1 font-medium uppercase tracking-wider">Partiels</div>
+    </div>
+    
+    <div class="card-hover bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl p-5 text-white shadow-xl">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+        </div>
+        <div class="text-3xl font-bold">{{ nb_non_payes|default:0 }}</div>
+        <div class="text-xs text-white/70 mt-1 font-medium uppercase tracking-wider">Non payés</div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="font-semibold text-slate-900">Liste des étudiants</h3>
+        <span class="text-sm text-slate-400">{{ etudiants|length }} étudiant(s)</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-base">
+            <thead class="bg-slate-50 text-slate-600">
+                <tr>
+                    <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">Étudiant</th>
+                    <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">Matricule</th>
+                    <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">Filière</th>
+                    <th class="px-6 py-4 text-center font-bold text-sm uppercase tracking-wider">Niveau</th>
+                    <th class="px-6 py-4 text-right font-bold text-sm uppercase tracking-wider">Montant</th>
+                    <th class="px-6 py-4 text-center font-bold text-sm uppercase tracking-wider">Statut</th>
+                    <th class="px-6 py-4 text-center font-bold text-sm uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for s in etudiants %}
+                <tr class="table-row hover:bg-slate-50/80 transition-colors group">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm">
+                                {{ s.name|first|upper }}
+                            </div>
+                            <span class="font-semibold text-slate-900 text-sm">{{ s.name }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="px-2.5 py-1.5 bg-slate-100 rounded-lg text-xs font-mono text-slate-700 font-medium">{{ s.matricule }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-700 font-medium">{{ s.filiere|default:"-" }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold">{{ s.get_niveau_display }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="font-bold text-slate-900 text-sm">{{ s.montant_total|floatformat:0 }} FCFA</div>
+                        <div class="text-xs text-slate-500 font-medium mt-0.5">Payé: {{ s.montant_paye|floatformat:0 }} FCFA</div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if s.statut == "paye" %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Payé
+                            </span>
+                        {% elif s.statut == "partiel" %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                Partiel
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700 border border-rose-200">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                Non payé
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex justify-center gap-2 items-center">
+                            <a href="{% url 'student_receipt' s.id %}" target="_blank" class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-medium px-3 py-2 rounded-lg transition hover:bg-slate-200">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Reçu
+                            </a>
+                            <button onclick="openPayModal('{{ s.id }}', '{{ s.name }}', '{{ s.montant_total|floatformat:0 }}', '{{ s.montant_paye|floatformat:0 }}')" 
+                                    class="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs font-medium px-3 py-2 rounded-lg transition-all shadow-sm shadow-blue-500/30">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                Payer
+                            </button>
+                            <form method="post" action="{% url 'delete_etudiant' s.id %}" onsubmit="return confirm('Supprimer {{ s.name }} ?')" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-16">
+                        <div class="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                        </div>
+                        <h4 class="text-lg font-semibold text-slate-700 mb-1">Aucun étudiant trouvé</h4>
+                        <p class="text-slate-400 text-sm mb-4">Ajoutez votre premier étudiant pour commencer</p>
+                        <button onclick="document.getElementById('modal-add').classList.remove('hidden')" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Ajouter un étudiant
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Ajouter -->
+<div id="modal-add" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="document.getElementById('modal-add').classList.add('hidden')"></div>
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="modal-enter bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 border border-slate-100">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Nouvel étudiant</h3>
+                        <p class="text-sm text-slate-400">Ajouter un étudiant à la base</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('modal-add').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <form method="post" action="{% url 'add_etudiant' %}" class="px-6 py-5 flex flex-col gap-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Nom complet</label>
+                        <input type="text" name="name" placeholder="Ex: Jean Kouassi" required 
+                               class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Matricule</label>
+                        <input type="text" name="matricule" placeholder="Ex: UCCB2025001" required 
+                               class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Filière</label>
+                        <input type="text" name="filiere" placeholder="Ex: Informatique" 
+                               class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Niveau</label>
+                        <select name="niveau" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                            <option value="L1">Licence 1</option>
+                            <option value="L2">Licence 2</option>
+                            <option value="L3">Licence 3</option>
+                            <option value="M1">Master 1</option>
+                            <option value="M2">Master 2</option>
+                            <option value="D1">Doctorat 1</option>
+                            <option value="D2">Doctorat 2</option>
+                            <option value="D3">Doctorat 3</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Montant total (FCFA)</label>
+                        <div class="relative">
+                            <input type="number" name="montant_total" placeholder="500000" required 
+                                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs">FCFA</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Mode de paiement</label>
+                        <select name="mode_paiement" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                            <option value="cash">Espèces</option>
+                            <option value="mobile_money">Mobile Money</option>
+                            <option value="virement">Virement bancaire</option>
+                            <option value="cheque">Chèque</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-add').classList.add('hidden')" 
+                            class="flex-1 px-4 py-3 border border-slate-200 text-slate-600 rounded-xl font-medium text-sm hover:bg-slate-50 transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium text-sm hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Payer -->
+<div id="modal-pay" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="document.getElementById('modal-pay').classList.add('hidden')"></div>
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="modal-enter bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-slate-100">
+            <div class="px-6 py-5 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Enregistrer un paiement</h3>
+                        <p id="pay-name" class="text-sm text-slate-400 mt-0.5"></p>
+                    </div>
+                </div>
+            </div>
+            <form method="post" action="{% url 'pay_etudiant' %}" class="px-6 py-5 flex flex-col gap-4">
+                {% csrf_token %}
+                <input type="hidden" name="etudiant_id" id="pay-id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200">
+                        <div class="text-xs text-slate-500 mb-1">Total à payer</div>
+                        <div id="pay-total" class="text-lg font-bold text-slate-900"></div>
+                    </div>
+                    <div class="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200">
+                        <div class="text-xs text-emerald-600 mb-1">Déjà payé</div>
+                        <div id="pay-deja" class="text-lg font-bold text-emerald-700"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Montant à payer (FCFA)</label>
+                    <div class="relative">
+                        <input type="number" name="montant" placeholder="250000" required 
+                               class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">FCFA</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Mode de paiement</label>
+                    <select name="mode_paiement" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                        <option value="cash">Espèces</option>
+                        <option value="mobile_money">Mobile Money</option>
+                        <option value="virement">Virement bancaire</option>
+                        <option value="cheque">Chèque</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-pay').classList.add('hidden')" 
+                            class="flex-1 px-4 py-3 border border-slate-200 text-slate-600 rounded-xl font-medium text-sm hover:bg-slate-50 transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-medium text-sm hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg shadow-emerald-500/30">
+                        Valider le paiement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openPayModal(id, name, total, deja) {
+    document.getElementById('pay-id').value = id;
+    document.getElementById('pay-name').textContent = name;
+    document.getElementById('pay-total').textContent = total + ' FCA';
+    document.getElementById('pay-deja').textContent = deja + ' FCA';
+    document.getElementById('modal-pay').classList.remove('hidden');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('modal-add').classList.add('hidden');
+        document.getElementById('modal-pay').classList.add('hidden');
+    }
+});
+</script>
+
+{% endblock %}
