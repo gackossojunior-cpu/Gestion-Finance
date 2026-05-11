@@ -375,7 +375,11 @@ def transactions_view(request):
 
     # Filtrage par type
     filter_type = request.GET.get('type', 'all')
-    if filter_type == 'salaires':
+    if filter_type == 'revenus':
+        transactions = transactions.filter(amount__gt=0)
+    elif filter_type == 'depenses':
+        transactions = transactions.filter(amount__lt=0)
+    elif filter_type == 'salaires':
         transactions = transactions.filter(
             Q(text__startswith='Salaire enseignant') | Q(text__startswith='Salaire personnel')
         )
