@@ -4,8 +4,8 @@ from django.db.models import Q, Sum
 from django.utils import timezone
 from rest_framework import generics
 
-from .models import Transaction, Student, Enseignant, Personnel
-from .serializers import TransactionSerializer, StudentSerializer
+from .models import Transaction, Student, Enseignant, Personnel, Bus, AffectationTransport, Trajet, DepenseTransport
+from .serializers import TransactionSerializer, StudentSerializer, BusSerializer, AffectationTransportSerializer, TrajetSerializer, DepenseTransportSerializer
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -25,7 +25,7 @@ class TransactionRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIV
 
 class StudentListCreateView(generics.ListCreateAPIView):
     queryset = Student.objects.all()
-    serializer_class = StudentSerializer
+    serializer_class = StudentSerializer 
 
 
 class StudentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -444,3 +444,173 @@ def student_receipt(request, id):
         'receipt_number': (payment_transaction and str(payment_transaction.id).split('-')[0].upper()) or str(student.id).split('-')[0].upper(),
     }
     return render(request, 'receipt_student.html', context)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Transports
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def transports_view(request):
+    """Affiche la liste des bus et trajets"""
+    buses = Bus.objects.all()
+    trajets = Trajet.objects.all()
+    affectations = AffectationTransport.objects.filter(actif=True)
+    depenses = DepenseTransport.objects.all()
+    personnels = Personnel.objects.all()
+    
+    # Statistiques
+    total_buses = buses.count()
+    buses_actifs = buses.filter(statut='actif').count()
+    buses_maintenance = buses.filter(statut='maintenance').count()
+    buses_hors_service = buses.filter(statut='hors_service').count()
+    total_trajets = trajets.count()
+    active_affectations = affectations.count()
+    
+    # Total des dépenses
+    total_depenses = depenses.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+    depenses_carburant = depenses.filter(type_depense='carburant').aggregate(total=Sum('montant'))['total'] or Decimal('0')
+    depenses_entretien = depenses.filter(type_depense='entretien').aggregate(total=Sum('montant'))['total'] or Decimal('0')
+    depenses_reparation = depenses.filter(type_depense='reparation').aggregate(total=Sum('montant'))['total'] or Decimal('0')
+    
+    context = {
+        'buses': buses,
+        'trajets': trajets,
+        'affectations': affectations,
+        'depenses': depenses,
+        'personnels': personnels,
+        'total_buses': total_buses,
+        'buses_actifs': buses_actifs,
+        'buses_maintenance': buses_maintenance,
+        'buses_hors_service': buses_hors_service,
+        'total_trajets': total_trajets,
+        'active_affectations': active_affectations,
+        'total_depenses': total_depenses,
+        'depenses_carburant': depenses_carburant,
+        'depenses_entretien': depenses_entretien,
+        'depenses_reparation': depenses_reparation,
+    }
+    return render(request, 'transports.html', context)
+
+
+def add_bus(request):
+    """Ajoute un nouveau bus"""
+    if request.method == 'POST':
+        numero = request.POST.get('numero')
+        plaque = request.POST.get('plaque')
+        capacite = int(request.POST.get('capacite', 50))
+        
+        Bus.objects.create(
+            numero=numero,
+            plaque=plaque,
+            capacite=capacite,
+            statut='actif'
+        )
+    return redirect('transports')
+
+
+def edit_bus(request, id):
+    """Modifie un bus"""
+    bus = get_object_or_404(Bus, id=id)
+    if request.method == 'POST':
+        bus.numero = request.POST.get('numero', bus.numero)
+        bus.plaque = request.POST.get('plaque', bus.plaque)
+        bus.capacite = int(request.POST.get('capacite', bus.capacite))
+        bus.statut = request.POST.get('statut', bus.statut)
+        bus.save()
+    return redirect('transports')
+
+
+def delete_bus(request, id):
+    """Supprime un bus"""
+    bus = get_object_or_404(Bus, id=id)
+    bus.delete()
+    return redirect('transports')
+
+
+def add_trajet(request):
+    """Ajoute un nouveau trajet"""
+    if request.method == 'POST':
+        nom = request.POST.get('nom')
+        depart = request.POST.get('depart')
+        destination = request.POST.get('destination')
+        heure_depart = request.POST.get('heure_depart')
+        heure_arrivee = request.POST.get('heure_arrivee')
+        
+        Trajet.objects.create(
+            nom=nom,
+            depart=depart,
+            destination=destination,
+            heure_depart=heure_depart,
+            heure_arrivee=heure_arrivee
+        )
+    return redirect('transports')
+
+
+def delete_trajet(request, id):
+    """Supprime un trajet"""
+    trajet = get_object_or_404(Trajet, id=id)
+    trajet.delete()
+    return redirect('transports')
+
+
+def add_affectation(request):
+    """Ajoute une affectation de bus à un chauffeur"""
+    if request.method == 'POST':
+        bus_id = request.POST.get('bus_id')
+        chauffeur_id = request.POST.get('chauffeur_id')
+        trajet_id = request.POST.get('trajet_id')
+        date_debut = request.POST.get('date_debut')
+        
+        bus = get_object_or_404(Bus, id=bus_id)
+        chauffeur = get_object_or_404(Personnel, id=chauffeur_id) if chauffeur_id else None
+        trajet = get_object_or_404(Trajet, id=trajet_id)
+        
+        AffectationTransport.objects.create(
+            bus=bus,
+            chauffeur=chauffeur,
+            trajet=trajet,
+            date_debut=date_debut,
+            actif=True
+        )
+    return redirect('transports')
+
+
+def end_affectation(request, id):
+    """Termine une affectation"""
+    affectation = get_object_or_404(AffectationTransport, id=id)
+    affectation.date_fin = timezone.now().date()
+    affectation.actif = False
+    affectation.save()
+    return redirect('transports')
+
+
+def add_depense_transport(request):
+    """Ajoute une dépense de transport"""
+    if request.method == 'POST':
+        bus_id = request.POST.get('bus_id')
+        type_depense = request.POST.get('type_depense')
+        montant = Decimal(request.POST.get('montant', 0))
+        description = request.POST.get('description', '')
+        
+        bus = get_object_or_404(Bus, id=bus_id)
+        
+        DepenseTransport.objects.create(
+            bus=bus,
+            type_depense=type_depense,
+            montant=montant,
+            description=description
+        )
+        
+        # Enregistrer la transaction
+        Transaction.objects.create(
+            text=f"Dépense transport - {bus.numero} ({type_depense})",
+            amount=-montant,
+        )
+    return redirect('transports')
+
+
+def delete_depense_transport(request, id):
+    """Supprime une dépense de transport"""
+    depense = get_object_or_404(DepenseTransport, id=id)
+    depense.delete()
+    return redirect('transports')

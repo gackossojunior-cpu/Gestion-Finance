@@ -24,4 +24,16 @@ urlpatterns = [
     path('transactions/delete/<uuid:id>/', views.delete_transaction, name='delete_transaction'),
     path('transactions/<uuid:id>/receipt/', views.transaction_receipt, name='transaction_receipt'),
     path('etudiants/<uuid:id>/receipt/', views.student_receipt, name='student_receipt'),
+    
+    # Transports
+    path('transports/', views.transports_view, name='transports'),
+    path('transports/bus/add/', views.add_bus, name='add_bus'),
+    path('transports/bus/edit/<int:id>/', views.edit_bus, name='edit_bus'),
+    path('transports/bus/delete/<int:id>/', views.delete_bus, name='delete_bus'),
+    path('transports/trajet/add/', views.add_trajet, name='add_trajet'),
+    path('transports/trajet/delete/<int:id>/', views.delete_trajet, name='delete_trajet'),
+    path('transports/affectation/add/', views.add_affectation, name='add_affectation'),
+    path('transports/affectation/end/<int:id>/', views.end_affectation, name='end_affectation'),
+    path('transports/depense/add/', views.add_depense_transport, name='add_depense_transport'),
+    path('transports/depense/delete/<int:id>/', views.delete_depense_transport, name='delete_depense_transport'),
 ]

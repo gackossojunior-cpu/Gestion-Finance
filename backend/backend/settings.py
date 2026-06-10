@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
+import os
 import pymysql
 pymysql.version_info = (2, 2, 1, "final", 0)  # Forcer la version
 pymysql.install_as_MySQLdb()
@@ -86,16 +87,26 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'gestion_finance_uccb',
-        'USER': 'Junior',          # votre utilisateur MySQL
-        'PASSWORD': 'junior2.0',          # votre mot de passe MySQL
-        'HOST': 'localhost',
-        'PORT': '3306',
+USE_MYSQL = os.getenv('USE_MYSQL', '0') == '1'
+
+if USE_MYSQL:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'gestion_finance_uccb',
+            'USER': 'Junior',          # votre utilisateur MySQL
+            'PASSWORD': 'junior2.0',          # votre mot de passe MySQL
+            'HOST': '127.0.0.1',
+            'PORT': '3307',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation

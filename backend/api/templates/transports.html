@@ -1,0 +1,603 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Gestion des Transports{% endblock %}
+
+{% block extra_css %}
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { color-scheme: light; --primary: #0f6bed; --accent: #06b6d4; }
+body { color: #0f172a; background: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+.container { max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* Header */
+.header { margin-bottom: 2.5rem; }
+.header-title { font-size: 2.8rem; font-weight: 900; color: #0f172a; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+.header-subtitle { font-size: 1rem; color: #64748b; max-width: 60rem; line-height: 1.6; }
+
+/* KPI Grid */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
+.kpi-card { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-radius: 1.25rem; padding: 1.8rem; border: 1px solid rgba(148, 163, 184, 0.15); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); transition: all 0.3s ease; }
+.kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12); }
+.kpi-label { font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.8rem; }
+.kpi-value { font-size: 2.2rem; font-weight: 900; color: #0f172a; margin-bottom: 0.4rem; }
+.kpi-desc { font-size: 0.85rem; color: #94a3b8; }
+
+/* Main Content Card */
+.content-card { background: #ffffff; border-radius: 1.5rem; border: 1px solid rgba(148, 163, 184, 0.12); box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06); overflow: hidden; }
+
+/* Tab Navigation */
+.tabs-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid rgba(148, 163, 184, 0.1); background: #f8fafc; }
+.tab-list { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.tab-btn { padding: 0.65rem 1.25rem; border: none; background: transparent; color: #64748b; font-weight: 600; font-size: 0.95rem; cursor: pointer; border-radius: 0.75rem; transition: all 0.2s ease; position: relative; }
+.tab-btn:hover { background: rgba(15, 107, 237, 0.06); color: #0f6bed; }
+.tab-btn.active { color: #ffffff; background: linear-gradient(135deg, #0f6bed 0%, #0652cc 100%); }
+.add-action { margin-left: auto; font-size: 0.85rem; color: #0f6bed; font-weight: 700; cursor: pointer; padding: 0.5rem 1rem; border-radius: 0.6rem; transition: all 0.2s ease; border: none; background: transparent; }
+.add-action:hover { background: rgba(15, 107, 237, 0.08); }
+
+/* Tab Content */
+.tabs-content { padding: 2rem; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; animation: fadeIn 0.2s ease-in; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.section-title { font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+.section-desc { font-size: 0.9rem; color: #64748b; }
+
+/* Tables */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead { background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%); }
+.data-table th { padding: 1rem 1.2rem; text-align: left; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid rgba(148, 163, 184, 0.15); }
+.data-table td { padding: 1rem 1.2rem; border-bottom: 1px solid rgba(148, 163, 184, 0.08); font-size: 0.95rem; color: #334155; }
+.data-table tbody tr { transition: all 0.2s ease; }
+.data-table tbody tr:hover { background: rgba(15, 107, 237, 0.02); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+
+.cell-mono { font-family: 'Monaco', 'Courier New', monospace; font-weight: 600; color: #0f172a; }
+.cell-muted { color: #94a3b8; font-size: 0.9rem; }
+
+/* Status Pills */
+.status { display: inline-flex; align-items: center; padding: 0.4rem 0.9rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; }
+.status.active { background: #ecfdf5; color: #065f46; }
+.status.maintenance { background: #fffbeb; color: #92400e; }
+.status.inactive { background: #fef2f2; color: #991b1b; }
+
+/* Empty State */
+.empty-box { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
+.empty-box-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+
+/* Action Buttons */
+.action-buttons { display: flex; gap: 0.5rem; }
+.btn-sm { padding: 0.5rem 0.9rem; font-size: 0.8rem; border: 1px solid #e2e8f0; background: #ffffff; color: #475569; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s ease; font-weight: 600; }
+.btn-sm:hover { background: #f1f5f9; border-color: #cbd5e1; }
+.btn-sm.danger { color: #991b1b; border-color: rgba(153, 27, 27, 0.2); }
+.btn-sm.danger:hover { background: rgba(153, 27, 27, 0.05); }
+
+/* Modal */
+.modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 1.5rem; animation: fadeIn 0.2s ease-in; }
+.modal.hidden { display: none; }
+.modal-content { background: #ffffff; border-radius: 1.25rem; box-shadow: 0 40px 80px rgba(15, 23, 42, 0.2); width: 100%; max-width: 450px; overflow: hidden; }
+.modal-header { padding: 1.8rem; border-bottom: 1px solid rgba(148, 163, 184, 0.1); display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 1.2rem; font-weight: 800; color: #0f172a; }
+.modal-close { background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem; transition: all 0.2s ease; }
+.modal-close:hover { background: rgba(15, 107, 237, 0.08); color: #0f6bed; }
+.modal-body { padding: 1.8rem; }
+.modal-footer { padding: 1rem 1.8rem; border-top: 1px solid rgba(148, 163, 184, 0.1); display: flex; gap: 0.8rem; justify-content: flex-end; background: #f8fafc; }
+
+/* Forms */
+.form-group { margin-bottom: 1.2rem; }
+.form-label { display: block; font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.75rem; font-size: 0.95rem; font-family: inherit; background: #f8fafc; color: #0f172a; transition: all 0.2s ease; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; background: #ffffff; border-color: #0f6bed; box-shadow: 0 0 0 3px rgba(15, 107, 237, 0.1); }
+.form-textarea { resize: vertical; }
+
+/* Buttons */
+.btn { padding: 0.8rem 1.6rem; border: none; border-radius: 0.75rem; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease; font-family: inherit; }
+.btn-primary { background: linear-gradient(135deg, #0f6bed 0%, #0652cc 100%); color: #ffffff; box-shadow: 0 8px 20px rgba(15, 107, 237, 0.2); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(15, 107, 237, 0.3); }
+.btn-secondary { background: #e2e8f0; color: #334155; }
+.btn-secondary:hover { background: #cbd5e1; }
+
+.inline { display: inline; }
+
+@media (max-width: 768px) {
+  .container { padding: 1.5rem 1rem; }
+  .header-title { font-size: 2rem; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .tabs-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .tab-list { width: 100%; }
+  .add-action { margin-left: 0; margin-top: 0.5rem; }
+  .tabs-content { padding: 1.5rem; }
+  .data-table { min-width: 100%; }
+  .modal-content { max-width: calc(100% - 2rem); }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .header-title { font-size: 1.5rem; }
+  .section-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1 class="header-title">Gestion des Transports</h1>
+        <p class="header-subtitle">Pilotez votre flotte, planifiez vos trajets et maîtrisez vos dépenses en un seul endroit</p>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Bus en flotte</div>
+            <div class="kpi-value">{{ total_buses|default:0 }}</div>
+            <div class="kpi-desc">Véhicules enregistrés</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">En service</div>
+            <div class="kpi-value">{{ buses_actifs|default:0 }}</div>
+            <div class="kpi-desc">Véhicules opérationnels</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Missions actives</div>
+            <div class="kpi-value">{{ active_affectations|default:0 }}</div>
+            <div class="kpi-desc">Affectations en cours</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Dépenses totales</div>
+            <div class="kpi-value">{{ total_depenses|floatformat:0|default:'0' }} FC</div>
+            <div class="kpi-desc">Charges transport</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-card">
+        <!-- Tabs Header -->
+        <div class="tabs-header">
+            <div class="tab-list">
+                <button type="button" class="tab-btn active" onclick="switchTab('buses', this)">Bus</button>
+                <button type="button" class="tab-btn" onclick="switchTab('trajets', this)">Trajets</button>
+                <button type="button" class="tab-btn" onclick="switchTab('affectations', this)">Affectations</button>
+                <button type="button" class="tab-btn" onclick="switchTab('depenses', this)">Dépenses</button>
+            </div>
+            <button type="button" class="add-action" onclick="getCurrentTabAction()">+ Ajouter</button>
+        </div>
+
+        <!-- Tabs Content -->
+        <div class="tabs-content">
+
+            <!-- BUS TAB -->
+            <div id="pane-buses" class="tab-pane active">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Numéro</th>
+                            <th>Plaque</th>
+                            <th>Capacité</th>
+                            <th>Statut</th>
+                            <th>Chauffeur</th>
+                            <th style="width: 200px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bus in buses %}
+                        <tr>
+                            <td class="cell-mono">{{ bus.numero }}</td>
+                            <td class="cell-mono">{{ bus.plaque }}</td>
+                            <td>{{ bus.capacite }} places</td>
+                            <td><span class="status {% if bus.statut == 'actif' %}active{% elif bus.statut == 'maintenance' %}maintenance{% else %}inactive{% endif %}">{{ bus.get_statut_display }}</span></td>
+                            <td>{% if bus.chauffeur_actuel %}<strong>{{ bus.chauffeur_actuel }}</strong>{% else %}<span class="cell-muted">Non assigné</span>{% endif %}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button type="button" class="btn-sm" onclick="openModal('editBusModal{{ bus.id }}')">Modifier</button>
+                                    <form method="post" action="{% url 'delete_bus' bus.id %}" class="inline" onsubmit="return confirm('Supprimer ce bus ?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-sm danger">Supprimer</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-box">
+                                    <div class="empty-box-icon">📭</div>
+                                    <p>Aucun bus enregistré. Commencez à ajouter des véhicules à votre flotte.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TRAJETS TAB -->
+            <div id="pane-trajets" class="tab-pane">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Départ</th>
+                            <th>Destination</th>
+                            <th>Départ</th>
+                            <th>Arrivée</th>
+                            <th style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trajet in trajets %}
+                        <tr>
+                            <td><strong>{{ trajet.nom }}</strong></td>
+                            <td>{{ trajet.depart }}</td>
+                            <td>{{ trajet.destination }}</td>
+                            <td><span class="status">{{ trajet.heure_depart|time:"H:i" }}</span></td>
+                            <td><span class="status">{{ trajet.heure_arrivee|time:"H:i" }}</span></td>
+                            <td>
+                                <form method="post" action="{% url 'delete_trajet' trajet.id %}" class="inline" onsubmit="return confirm('Supprimer ce trajet ?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-sm danger">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-box">
+                                    <div class="empty-box-icon">🚫</div>
+                                    <p>Aucun trajet. Créez vos premières routes d'exploitation.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- AFFECTATIONS TAB -->
+            <div id="pane-affectations" class="tab-pane">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Bus</th>
+                            <th>Chauffeur</th>
+                            <th>Trajet</th>
+                            <th>Date début</th>
+                            <th>Statut</th>
+                            <th style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aff in affectations %}
+                        <tr>
+                            <td class="cell-mono"><strong>{{ aff.bus.numero }}</strong></td>
+                            <td>{% if aff.chauffeur %}{{ aff.chauffeur.name }}{% else %}<span class="cell-muted">Non assigné</span>{% endif %}</td>
+                            <td>{{ aff.trajet.nom }}</td>
+                            <td>{{ aff.date_debut }}</td>
+                            <td><span class="status active">En cours</span></td>
+                            <td>
+                                <form method="post" action="{% url 'end_affectation' aff.id %}" class="inline" onsubmit="return confirm('Terminer cette affectation ?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-sm">Terminer</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-box">
+                                    <div class="empty-box-icon">✨</div>
+                                    <p>Aucune affectation active. Créez une nouvelle mission.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- DÉPENSES TAB -->
+            <div id="pane-depenses" class="tab-pane">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Bus</th>
+                            <th>Type</th>
+                            <th>Montant</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dep in depenses %}
+                        <tr>
+                            <td class="cell-mono"><strong>{{ dep.bus.numero }}</strong></td>
+                            <td>
+                                {% if dep.type_depense == 'carburant' %}
+                                    <span class="status">🛢️ Carburant</span>
+                                {% elif dep.type_depense == 'entretien' %}
+                                    <span class="status maintenance">🔧 Entretien</span>
+                                {% else %}
+                                    <span class="status inactive">🔨 Réparation</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ dep.montant|floatformat:0 }} FC</strong></td>
+                            <td class="cell-muted">{{ dep.description }}</td>
+                            <td>{{ dep.date }}</td>
+                            <td>
+                                <form method="post" action="{% url 'delete_depense_transport' dep.id %}" class="inline" onsubmit="return confirm('Supprimer cette dépense ?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-sm danger">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-box">
+                                    <div class="empty-box-icon">💸</div>
+                                    <p>Aucune dépense enregistrée. Suivi des coûts pour commencer.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal hidden" id="addBusModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Nouveau bus</h2>
+            <button type="button" class="modal-close" onclick="closeModal('addBusModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'add_bus' %}">{% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Numéro du bus</label>
+                    <input name="numero" class="form-input" placeholder="BUS-001" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Plaque d'immatriculation</label>
+                    <input name="plaque" class="form-input" placeholder="ABC-123-CG" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Capacité (places)</label>
+                    <input type="number" name="capacite" class="form-input" placeholder="50" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addBusModal')">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal hidden" id="addTrajetModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Nouveau trajet</h2>
+            <button type="button" class="modal-close" onclick="closeModal('addTrajetModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'add_trajet' %}">{% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Nom du trajet</label>
+                    <input name="nom" class="form-input" placeholder="Kinshasa-Kasai" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Point de départ</label>
+                    <input name="depart" class="form-input" placeholder="Kinshasa" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Destination</label>
+                    <input name="destination" class="form-input" placeholder="Kasai" required />
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Heure départ</label>
+                        <input type="time" name="heure_depart" class="form-input" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Heure arrivée</label>
+                        <input type="time" name="heure_arrivee" class="form-input" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addTrajetModal')">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal hidden" id="addAffectModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Nouvelle affectation</h2>
+            <button type="button" class="modal-close" onclick="closeModal('addAffectModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'add_affectation' %}">{% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Bus</label>
+                    <select name="bus_id" class="form-select" required>
+                        <option value="">Sélectionner un bus</option>
+                        {% for bus in buses %}<option value="{{ bus.id }}">{{ bus.numero }} — {{ bus.plaque }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Chauffeur</label>
+                    <select name="chauffeur_id" class="form-select">
+                        <option value="">Non assigné</option>
+                        {% for chauffeur in personnels %}<option value="{{ chauffeur.id }}">{{ chauffeur.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Trajet</label>
+                    <select name="trajet_id" class="form-select" required>
+                        <option value="">Sélectionner un trajet</option>
+                        {% for trajet in trajets %}<option value="{{ trajet.id }}">{{ trajet.nom }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date début</label>
+                    <input type="date" name="date_debut" class="form-input" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addAffectModal')">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal hidden" id="addDepenseModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Nouvelle dépense</h2>
+            <button type="button" class="modal-close" onclick="closeModal('addDepenseModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'add_depense_transport' %}">{% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Bus</label>
+                    <select name="bus_id" class="form-select" required>
+                        <option value="">Sélectionner un bus</option>
+                        {% for bus in buses %}<option value="{{ bus.id }}">{{ bus.numero }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type de dépense</label>
+                    <select name="type_depense" class="form-select" required>
+                        <option value="carburant">🛢️ Carburant</option>
+                        <option value="entretien">🔧 Entretien</option>
+                        <option value="reparation">🔨 Réparation</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Montant (FC)</label>
+                    <input type="number" name="montant" class="form-input" step="0.01" placeholder="0" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" rows="3" class="form-textarea" placeholder="Notes optionnelles..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addDepenseModal')">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for bus in buses %}
+<div class="modal hidden" id="editBusModal{{ bus.id }}">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Modifier le bus</h2>
+            <button type="button" class="modal-close" onclick="closeModal('editBusModal{{ bus.id }}')">✕</button>
+        </div>
+        <div class="modal-body">
+            <form method="post" action="{% url 'edit_bus' bus.id %}">{% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Numéro</label>
+                    <input type="text" name="numero" value="{{ bus.numero }}" class="form-input" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Plaque</label>
+                    <input type="text" name="plaque" value="{{ bus.plaque }}" class="form-input" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Capacité</label>
+                    <input type="number" name="capacite" value="{{ bus.capacite }}" class="form-input" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Statut</label>
+                    <select name="statut" class="form-select" required>
+                        <option value="actif" {% if bus.statut == 'actif' %}selected{% endif %}>Actif</option>
+                        <option value="maintenance" {% if bus.statut == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                        <option value="hors_service" {% if bus.statut == 'hors_service' %}selected{% endif %}>Hors service</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editBusModal{{ bus.id }}')">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentTab = 'buses';
+
+function switchTab(tab, button) {
+  currentTab = tab;
+  // Hide all panes
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  // Deactivate all buttons
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  // Show selected pane
+  const pane = document.getElementById('pane-' + tab);
+  if (pane) pane.classList.add('active');
+  // Activate button
+  if (button) button.classList.add('active');
+}
+
+function getCurrentTabAction() {
+  const actions = {
+    'buses': 'addBusModal',
+    'trajets': 'addTrajetModal',
+    'affectations': 'addAffectModal',
+    'depenses': 'addDepenseModal'
+  };
+  openModal(actions[currentTab] || 'addBusModal');
+}
+
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.add('hidden');
+}
+
+// Close modal when clicking on backdrop
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) closeModal(this.id);
+    });
+  });
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal:not(.hidden)').forEach(m => {
+      m.classList.add('hidden');
+    });
+  }
+});
+</script>
+{% endblock %}
