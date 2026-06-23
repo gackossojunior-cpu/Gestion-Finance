@@ -129,6 +129,14 @@ def etudiants_view(request):
     nb_partiels = Student.objects.filter(statut='partiel').count()
     nb_non_payes = Student.objects.filter(statut='non_paye').count()
 
+    today = timezone.now().date()
+    
+    for etudiant in queryset :
+        etudiant.en_alerte = (
+            today.day >= 5 and 
+            etudiant.statut in ['non_paye', 'partiel']
+        )
+
     context = {
         'etudiants': queryset,
         'search': search,
