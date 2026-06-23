@@ -2,189 +2,540 @@
 
 {% block content %}
 
-<!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="card-hover bg-white rounded-2xl p-6 border border-slate-200">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  .dash-root {
+    font-family: 'Inter', sans-serif;
+    color: #0F172A;
+  }
+
+  /* ── Stat cards ─────────────────────────────────────────── */
+  .stat-card {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow .2s ease, transform .2s ease;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 16px; bottom: 16px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+  }
+  .stat-card.accent-blue::before  { background: #6366F1; }
+  .stat-card.accent-green::before { background: #10B981; }
+  .stat-card.accent-rose::before  { background: #F43F5E; }
+
+  .stat-card:hover {
+    box-shadow: 0 8px 24px rgba(15,23,42,.08);
+    transform: translateY(-2px);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #94A3B8;
+  }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.5px;
+    color: #0F172A;
+  }
+  .stat-value span {
+    font-size: 14px;
+    font-weight: 400;
+    color: #94A3B8;
+    margin-left: 4px;
+  }
+
+  /* ── Section cards ───────────────────────────────────────── */
+  .section-card {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .section-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid #F1F5F9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-head-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .head-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .head-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1.2;
+  }
+  .head-sub {
+    font-size: 12px;
+    color: #94A3B8;
+    margin-top: 1px;
+  }
+
+  .link-small {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6366F1;
+    text-decoration: none;
+    letter-spacing: .01em;
+    transition: opacity .15s;
+  }
+  .link-small:hover { opacity: .7; }
+
+  /* ── Étudiants mini-stats ────────────────────────────────── */
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 20px 24px;
+  }
+  .mini-stat {
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .mini-stat .mini-val {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.3px;
+  }
+  .mini-stat .mini-lbl {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-top: 5px;
+  }
+
+  .mini-stat.total   { background: #F8FAFC; }
+  .mini-stat.total   .mini-val { color: #334155; }
+  .mini-stat.total   .mini-lbl { color: #94A3B8; }
+
+  .mini-stat.payes   { background: #F0FDF9; }
+  .mini-stat.payes   .mini-val { color: #059669; }
+  .mini-stat.payes   .mini-lbl { color: #6EE7B7; }
+
+  .mini-stat.partiels { background: #FFFBEB; }
+  .mini-stat.partiels .mini-val { color: #D97706; }
+  .mini-stat.partiels .mini-lbl { color: #FCD34D; }
+
+  .mini-stat.nonpayes { background: #FFF1F2; }
+  .mini-stat.nonpayes .mini-val { color: #E11D48; }
+  .mini-stat.nonpayes .mini-lbl { color: #FDA4AF; }
+
+  /* ── Progress bar ────────────────────────────────────────── */
+  .progress-wrap { padding: 0 24px 20px; }
+  .progress-track {
+    height: 5px;
+    background: #F1F5F9;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366F1, #818CF8);
+    border-radius: 99px;
+    transition: width .6s ease;
+  }
+  .progress-meta {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #94A3B8;
+    font-weight: 500;
+  }
+
+  /* ── Salaires ────────────────────────────────────────────── */
+  .sal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 20px 24px;
+  }
+  .sal-item {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  .sal-item.neutral { background: #F8FAFC; }
+  .sal-item.positive { background: #F0FDF9; }
+
+  .sal-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 6px;
+  }
+  .sal-item.neutral .sal-label   { color: #94A3B8; }
+  .sal-item.positive .sal-label  { color: #6EE7B7; }
+
+  .sal-value {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -.3px;
+    line-height: 1;
+  }
+  .sal-item.neutral .sal-value   { color: #0F172A; }
+  .sal-item.positive .sal-value  { color: #059669; }
+
+  .sal-currency {
+    font-size: 12px;
+    font-weight: 400;
+    margin-left: 2px;
+  }
+
+  /* ── Alertes retard ──────────────────────────────────────── */
+  .retard-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .retard-table thead { background: #F8FAFC; }
+  .retard-table thead th {
+    padding: 10px 20px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #94A3B8;
+    border-bottom: 1px solid #F1F5F9;
+  }
+  .retard-table thead th:last-child { text-align: right; }
+  .retard-table tbody tr {
+    border-bottom: 1px solid #F8FAFC;
+    transition: background .15s;
+  }
+  .retard-table tbody tr:last-child { border-bottom: none; }
+  .retard-table tbody tr:hover { background: #F8FAFC; }
+  .retard-table td { padding: 12px 20px; color: #334155; }
+  .retard-table td:first-child { font-weight: 600; color: #0F172A; }
+  .retard-table td.matricule { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; color: #64748B; }
+  .retard-table td.amount { text-align: right; font-weight: 700; color: #E11D48; font-variant-numeric: tabular-nums; }
+
+  /* ── Empty state ─────────────────────────────────────────── */
+  .empty-state {
+    padding: 32px;
+    text-align: center;
+  }
+  .empty-icon {
+    width: 48px; height: 48px;
+    background: #F0FDF9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+  }
+  .empty-text { font-size: 13px; color: #94A3B8; font-weight: 500; }
+
+  /* ── Transactions ────────────────────────────────────────── */
+  .tx-list { }
+  .tx-row {
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #F8FAFC;
+    transition: background .15s;
+  }
+  .tx-row:last-child { border-bottom: none; }
+  .tx-row:hover { background: #F8FAFC; }
+
+  .tx-dot {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .tx-dot.in  { background: #F0FDF9; color: #059669; }
+  .tx-dot.out { background: #FFF1F2; color: #E11D48; }
+
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0F172A;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tx-date {
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .tx-amount {
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.2px;
+  }
+  .tx-amount.positive { color: #059669; }
+  .tx-amount.negative { color: #E11D48; }
+
+  /* ── Layout helpers ──────────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .col-left  { grid-column: span 2; display: flex; flex-direction: column; gap: 16px; }
+  .col-right { grid-column: span 1; }
+
+  .badge-retard {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #FFF1F2;
+    color: #E11D48;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 99px;
+    letter-spacing: .02em;
+  }
+
+  @media (max-width: 1024px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .col-left, .col-right { grid-column: span 1; }
+  }
+  @media (max-width: 640px) {
+    .stats-row { grid-template-columns: 1fr; }
+    .mini-grid { grid-template-columns: repeat(2, 1fr); }
+    .sal-grid  { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="dash-root">
+
+  <!-- ── Stats ──────────────────────────────────────────────── -->
+  <div class="stats-row">
+    <div class="stat-card accent-blue">
+      <div class="stat-label">Solde</div>
+      <div class="stat-value">{{ solde|default:"0" }}<span>FCFA</span></div>
+    </div>
+    <div class="stat-card accent-green">
+      <div class="stat-label">Revenus</div>
+      <div class="stat-value">{{ income|default:"0" }}<span>FCFA</span></div>
+    </div>
+    <div class="stat-card accent-rose">
+      <div class="stat-label">Dépenses</div>
+      <div class="stat-value">{{ expense|default:"0" }}<span>FCFA</span></div>
+    </div>
+  </div>
+
+  <!-- ── Main grid ──────────────────────────────────────────── -->
+  <div class="main-grid">
+
+    <!-- Left column -->
+    <div class="col-left">
+
+      <!-- Étudiants -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-head-left">
+            <div class="head-icon" style="background:#EEF2FF;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
             </div>
-            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Solde</span>
+            <div>
+              <div class="head-title">Étudiants</div>
+              <div class="head-sub">Recouvrement {{ pct_recouvrement|floatformat:1 }}%</div>
+            </div>
+          </div>
+          <a href="{% url 'etudiants' %}" class="link-small">Voir tout →</a>
         </div>
-        <div class="text-3xl font-bold text-slate-900">{{ solde|default:"0" }} <span class="text-lg font-normal text-slate-500">FCFA</span></div>
+
+        <div class="mini-grid">
+          <div class="mini-stat total">
+            <div class="mini-val">{{ etu.total|default:0 }}</div>
+            <div class="mini-lbl">Total</div>
+          </div>
+          <div class="mini-stat payes">
+            <div class="mini-val">{{ etu.payes|default:0 }}</div>
+            <div class="mini-lbl">Payés</div>
+          </div>
+          <div class="mini-stat partiels">
+            <div class="mini-val">{{ etu.partiels|default:0 }}</div>
+            <div class="mini-lbl">Partiels</div>
+          </div>
+          <div class="mini-stat nonpayes">
+            <div class="mini-val">{{ etu.non_payes|default:0 }}</div>
+            <div class="mini-lbl">Non payés</div>
+          </div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-track">
+            <div class="progress-fill" style="width: {{ pct_recouvrement|floatformat:0 }}%"></div>
+          </div>
+          <div class="progress-meta">{{ total_paye|default:"0" }} / {{ total_attendu|default:"0" }} FCFA collectés</div>
+        </div>
+      </div>
+
+      <!-- Salaires -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-head-left">
+            <div class="head-icon" style="background:#F5F3FF;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+              </svg>
+            </div>
+            <div>
+              <div class="head-title">Salaires</div>
+              <div class="head-sub">Enseignants &amp; Personnel</div>
+            </div>
+          </div>
+        </div>
+        <div class="sal-grid">
+          <div class="sal-item neutral">
+            <div class="sal-label">Total salaires</div>
+            <div class="sal-value">{{ total_salaires|default:"0" }}<span class="sal-currency">FCFA</span></div>
+          </div>
+          <div class="sal-item positive">
+            <div class="sal-label">Total payé</div>
+            <div class="sal-value">{{ total_paye_salaires|default:"0" }}<span class="sal-currency">FCFA</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Retards de paiement -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-head-left">
+            <div class="head-icon" style="background:#FFF1F2;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E11D48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div>
+              <div class="head-title">Retards de paiement</div>
+              <div class="head-sub">{{ retard|length }} étudiant{{ retard|length|pluralize:"s" }} en retard</div>
+            </div>
+          </div>
+          {% if retard %}
+          <span class="badge-retard">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            {{ retard|length }}
+          </span>
+          {% endif %}
+        </div>
+
+        {% if retard %}
+        <div style="overflow-x:auto;">
+          <table class="retard-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Matricule</th>
+                <th style="text-align:right;">Reste à payer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in retard %}
+              <tr>
+                <td>{{ s.name }}</td>
+                <td class="matricule">{{ s.matricule }}</td>
+                <td class="amount">{{ s.reste }} FCFA</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <div class="empty-text">Aucun retard de paiement</div>
+        </div>
+        {% endif %}
+      </div>
+
+    </div><!-- /col-left -->
+
+    <!-- Right column -->
+    <div class="col-right">
+      <div class="section-card" style="height:100%;">
+        <div class="section-head">
+          <div class="head-title">Derniers paiements</div>
+          <a href="{% url 'transactions' %}" class="link-small">Voir tout</a>
+        </div>
+
+        {% if derniers_paiements %}
+        <div class="tx-list">
+          {% for t in derniers_paiements %}
+          <div class="tx-row">
+            <div class="tx-dot {% if t.amount > 0 %}in{% else %}out{% endif %}">
+              {% if t.amount > 0 %}↑{% else %}↓{% endif %}
+            </div>
+            <div class="tx-info">
+              <div class="tx-text">{{ t.text }}</div>
+              <div class="tx-date">{{ t.created_at|date:"d M Y" }}</div>
+            </div>
+            <div class="tx-amount {% if t.amount > 0 %}positive{% else %}negative{% endif %}">
+              {% if t.amount > 0 %}+{% endif %}{{ t.amount }}
+              <span style="font-size:10px;font-weight:500;color:#94A3B8;"> FCFA</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-text">Aucune transaction récente</div>
+        </div>
+        {% endif %}
+      </div>
     </div>
 
-    <div class="card-hover bg-white rounded-2xl p-6 border border-slate-200">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>
-            </div>
-            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Revenus</span>
-        </div>
-        <div class="text-3xl font-bold text-slate-900">{{ income|default:"0" }} <span class="text-lg font-normal text-slate-500">FCFA</span></div>
-    </div>
+  </div><!-- /main-grid -->
 
-    <div class="card-hover bg-white rounded-2xl p-6 border border-slate-200">
-        <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/></svg>
-            </div>
-            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Dépenses</span>
-        </div>
-        <div class="text-3xl font-bold text-slate-900">{{ expense|default:"0" }} <span class="text-lg font-normal text-slate-500">FCFA</span></div>
-    </div>
-</div>
-
-<!-- Two columns layout -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-    <!-- Left column: Students & Salaries -->
-    <div class="lg:col-span-2 flex flex-col gap-6">
-
-        <!-- Students Section -->
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-slate-900">Étudiants</h3>
-                        <p class="text-sm text-slate-500">Recouvrement {{ pct_recouvrement|floatformat:1 }}%</p>
-                    </div>
-                </div>
-                <a href="{% url 'etudiants' %}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">Voir tout →</a>
-            </div>
-            <div class="p-6">
-                <div class="grid grid-cols-4 gap-4">
-                    <div class="text-center p-4 bg-slate-50 rounded-xl">
-                        <div class="text-2xl font-bold text-slate-900">{{ etu.total|default:0 }}</div>
-                        <div class="text-xs text-slate-500 mt-1">Total</div>
-                    </div>
-                    <div class="text-center p-4 bg-emerald-50 rounded-xl">
-                        <div class="text-2xl font-bold text-emerald-600">{{ etu.payes|default:0 }}</div>
-                        <div class="text-xs text-emerald-600 mt-1">Payés</div>
-                    </div>
-                    <div class="text-center p-4 bg-amber-50 rounded-xl">
-                        <div class="text-2xl font-bold text-amber-600">{{ etu.partiels|default:0 }}</div>
-                        <div class="text-xs text-amber-600 mt-1">Partiels</div>
-                    </div>
-                    <div class="text-center p-4 bg-rose-50 rounded-xl">
-                        <div class="text-2xl font-bold text-rose-600">{{ etu.non_payes|default:0 }}</div>
-                        <div class="text-xs text-rose-600 mt-1">Non payés</div>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div class="bg-blue-500 h-2 rounded-full transition-all" style="width: {{ pct_recouvrement|floatformat:0 }}%"></div>
-                    </div>
-                    <p class="text-xs text-slate-400 mt-2">{{ total_paye|default:"0" }} / {{ total_attendu|default:"0" }} FCFA collectés</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Salaries Section -->
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center">
-                        <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-slate-900">Salaires</h3>
-                        <p class="text-sm text-slate-500">Enseignants &amp; Personnel</p>
-                    </div>
-                </div>
-            </div>
-            <div class="p-6 grid grid-cols-2 gap-4">
-                <div class="p-4 bg-slate-50 rounded-xl">
-                    <div class="text-sm text-slate-500 mb-1">Total salaires</div>
-                    <div class="text-xl font-bold text-slate-900">{{ total_salaires|default:"0" }} FCFA</div>
-                </div>
-                <div class="p-4 bg-emerald-50 rounded-xl">
-                    <div class="text-sm text-emerald-600 mb-1">Total payé</div>
-                    <div class="text-xl font-bold text-emerald-700">{{ total_paye_salaires|default:"0" }} FCFA</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Alertes Retards -->
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-                <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
-                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-slate-900">Retards de paiement</h3>
-                    <p class="text-sm text-slate-500">{{ retard|length }} étudiant{{ retard|length|pluralize:"s" }} en retard</p>
-                </div>
-            </div>
-            {% if retard %}
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 text-slate-600">
-                        <tr>
-                            <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">Nom</th>
-                            <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">Matricule</th>
-                            <th class="px-6 py-4 text-right font-bold text-sm uppercase tracking-wider">Reste à payer</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for s in retard %}
-                        <tr class="table-row hover:bg-slate-50">
-                            <td class="px-6 py-4 font-semibold text-slate-900 text-sm">{{ s.name }}</td>
-                            <td class="px-6 py-4 text-slate-600 font-medium text-sm">{{ s.matricule }}</td>
-                            <td class="px-6 py-4 text-right font-bold text-rose-600 text-sm">{{ s.reste }} FCFA</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <p class="text-slate-500">Aucun retard de paiement 🎉</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Right column: Recent transactions -->
-    <div>
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
-                <h3 class="font-semibold text-slate-900">Derniers paiements</h3>
-                <a href="{% url 'transactions' %}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">Voir tout</a>
-            </div>
-            {% if derniers_paiements %}
-            <div class="divide-y divide-slate-100">
-                {% for t in derniers_paiements %}
-                <div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-base font-semibold {% if t.amount > 0 %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %}">
-                            {% if t.amount > 0 %}↑{% else %}↓{% endif %}
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-slate-900">{{ t.text }}</p>
-                            <p class="text-xs text-slate-500 font-medium">{{ t.created_at|date:"d M Y" }}</p>
-                        </div>
-                    </div>
-                    <span class="text-sm font-bold {% if t.amount > 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                        {% if t.amount > 0 %}+{% endif %}{{ t.amount }} FCFA
-                    </span>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="p-6 text-center text-slate-500 font-medium">
-                Aucune transaction récente
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
+</div><!-- /dash-root -->
 
 {% endblock %}
-
