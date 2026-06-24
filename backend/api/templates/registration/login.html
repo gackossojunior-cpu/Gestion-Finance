@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion Administrateur</title>
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#0f172a;
+    overflow:hidden;
+    position:relative;
+}
+
+/* Cercles lumineux */
+body::before{
+    content:'';
+    position:absolute;
+    width:450px;
+    height:450px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+    top:-150px;
+    left:-100px;
+    filter:blur(120px);
+    opacity:.35;
+}
+
+body::after{
+    content:'';
+    position:absolute;
+    width:450px;
+    height:450px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#8b5cf6,#7c3aed);
+    bottom:-150px;
+    right:-100px;
+    filter:blur(120px);
+    opacity:.35;
+}
+
+.login-card{
+    width:430px;
+    padding:45px;
+    border-radius:28px;
+
+    background:rgba(255,255,255,.08);
+
+    backdrop-filter:blur(25px);
+
+    border:1px solid rgba(255,255,255,.1);
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.35);
+
+    position:relative;
+    z-index:10;
+}
+
+.logo{
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    margin:auto;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #7c3aed
+    );
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:34px;
+    color:white;
+
+    box-shadow:
+        0 10px 30px rgba(37,99,235,.4);
+}
+
+h1{
+    text-align:center;
+    color:white;
+    margin-top:20px;
+    font-size:30px;
+    font-weight:700;
+}
+
+.subtitle{
+    text-align:center;
+    color:#cbd5e1;
+    margin-top:8px;
+    margin-bottom:35px;
+    font-size:14px;
+}
+
+.form-group{
+    margin-bottom:20px;
+}
+
+label{
+    display:block;
+    color:#e2e8f0;
+    margin-bottom:8px;
+    font-size:14px;
+}
+
+.input-wrapper{
+    position:relative;
+}
+
+input{
+    width:100%;
+    padding:15px 18px;
+
+    border:none;
+    border-radius:14px;
+
+    background:rgba(255,255,255,.07);
+
+    color:white;
+    font-size:15px;
+
+    outline:none;
+
+    transition:.3s;
+}
+
+input:focus{
+    background:rgba(255,255,255,.12);
+
+    box-shadow:
+        0 0 0 3px rgba(59,130,246,.25);
+}
+
+input::placeholder{
+    color:#94a3b8;
+}
+
+.toggle-password{
+    position:absolute;
+    right:15px;
+    top:15px;
+    cursor:pointer;
+    color:#cbd5e1;
+}
+
+.login-btn{
+    width:100%;
+    padding:15px;
+
+    border:none;
+    border-radius:14px;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #7c3aed
+    );
+
+    color:white;
+    font-size:16px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+.login-btn:hover{
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(59,130,246,.4);
+}
+
+.error-box{
+    background:rgba(239,68,68,.15);
+    border:1px solid rgba(239,68,68,.3);
+    color:#fecaca;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:20px;
+    text-align:center;
+}
+
+.footer{
+    text-align:center;
+    margin-top:25px;
+    color:#94a3b8;
+    font-size:13px;
+}
+
+@media(max-width:500px){
+
+    .login-card{
+        width:92%;
+        padding:30px;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="login-card">
+
+    <div class="logo">🎓</div>
+
+    <h1>Connexion</h1>
+
+    <p class="subtitle">
+        Accédez à votre espace administrateur
+    </p>
+
+    {% if form.errors %}
+    <div class="error-box">
+        Nom d'utilisateur ou mot de passe incorrect.
+    </div>
+    {% endif %}
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Nom d'utilisateur</label>
+
+            <input
+                type="text"
+                name="username"
+                placeholder="Entrez votre identifiant"
+                required>
+        </div>
+
+        <div class="form-group">
+
+            <label>Mot de passe</label>
+
+            <div class="input-wrapper">
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Entrez votre mot de passe"
+                    required>
+
+                <span
+                    class="toggle-password"
+                    onclick="togglePassword()">
+
+                    👁
+
+                </span>
+
+            </div>
+
+        </div>
+
+        <button
+            type="submit"
+            class="login-btn">
+
+            Se connecter
+
+        </button>
+
+    </form>
+
+    <div class="footer">
+        © 2026 Gestion Finance
+    </div>
+
+</div>
+
+<script>
+
+function togglePassword(){
+
+    let password =
+        document.getElementById("password");
+
+    if(password.type === "password"){
+        password.type = "text";
+    }else{
+        password.type = "password";
+    }
+
+}
+
+</script>
+
+</body>
+</html>

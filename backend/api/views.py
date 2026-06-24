@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Sum
 from django.utils import timezone
 from rest_framework import generics
+from django.contrib.auth.decorators import login_required
 
 from .models import Transaction, Student, Enseignant, Personnel, Bus, AffectationTransport, Trajet, DepenseTransport
 from .serializers import TransactionSerializer, StudentSerializer, BusSerializer, AffectationTransportSerializer, TrajetSerializer, DepenseTransportSerializer
@@ -53,7 +54,7 @@ def get_finance_stats():
 # ═══════════════════════════════════════════════════════════════════════════════
 # Dashboard
 # ═══════════════════════════════════════════════════════════════════════════════
-
+@login_required
 def dashboard_view(request):
     stats = get_finance_stats()
 
@@ -110,7 +111,7 @@ def dashboard_view(request):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Étudiants
 # ═══════════════════════════════════════════════════════════════════════════════
-
+@login_required
 def etudiants_view(request):
     queryset = Student.objects.all()
     search = request.GET.get('q', '')
@@ -220,7 +221,7 @@ def delete_etudiant(request, id):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Enseignants
 # ═══════════════════════════════════════════════════════════════════════════════
-
+@login_required
 def enseignants_view(request):
     queryset = Enseignant.objects.all()
     search = request.GET.get('q', '')
@@ -319,7 +320,7 @@ def delete_enseignant(request, id):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Personnel
 # ═══════════════════════════════════════════════════════════════════════════════
-
+@login_required
 def personnel_view(request):
     queryset = Personnel.objects.all()
     search = request.GET.get('q', '')
@@ -417,7 +418,7 @@ def delete_personnel(request, id):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Transactions
 # ═══════════════════════════════════════════════════════════════════════════════
-
+@login_required
 def transactions_view(request):
     stats = get_finance_stats()
     transactions = Transaction.objects.all()
@@ -500,7 +501,7 @@ def student_receipt(request, id):
 # ═══════════════════════════════════════════════════════════════════════════════
 # Transports
 # ═══════════════════════════════════════════════════════════════════════════════
-
+@login_required
 def transports_view(request):
     """Affiche la liste des bus et trajets"""
     buses = Bus.objects.all()
